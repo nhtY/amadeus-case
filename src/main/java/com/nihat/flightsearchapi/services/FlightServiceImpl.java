@@ -1,8 +1,10 @@
 package com.nihat.flightsearchapi.services;
 
+import com.nihat.flightsearchapi.entities.Airport;
 import com.nihat.flightsearchapi.mapping.FlightMapper;
 import com.nihat.flightsearchapi.models.FlightDTO;
 import com.nihat.flightsearchapi.models.FlightUpdateDTO;
+import com.nihat.flightsearchapi.repositories.AirportRepository;
 import com.nihat.flightsearchapi.repositories.FlightRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 public class FlightServiceImpl implements FlightService{
 
     private final FlightRepository flightRepository;
+    private final AirportRepository airportRepository;
     private final FlightMapper flightMapper;
 
     @Override
@@ -45,6 +48,16 @@ public class FlightServiceImpl implements FlightService{
         // find if the flight exists then update it
         return flightRepository.findById(id)
                 .map(flight -> {
+                    Airport departureAirport = airportRepository.findById(flightUpdateDTO.getDepartureAirportId()).orElse(null);
+                    if (departureAirport != null) {
+                        flight.setDepartureAirport(departureAirport);
+                    }
+
+                    Airport arrivalAirport = airportRepository.findById(flightUpdateDTO.getArrivalAirportId()).orElse(null);
+                    if (arrivalAirport != null) {
+                        flight.setArrivalAirport(arrivalAirport);
+                    }
+
                     flight.setDepartureDateTime(flightUpdateDTO.getDepartureDateTime());
 
                     if (flightUpdateDTO.getReturnDateTime() != null) {
@@ -52,6 +65,7 @@ public class FlightServiceImpl implements FlightService{
                     }
 
                     flight.setPrice(flightUpdateDTO.getPrice());
+
                     return flightMapper.toFlightDTO(flightRepository.save(flight));
                 });
     }
